@@ -15,26 +15,28 @@ SENSOR_LOG_DIRECTORY = os.getenv("HOME") + '/SensorLogs/'
 BATHROOM_MAX_HUMIDITY = 85
 BATHROOM_HYSTERESIS = 1
 
-#serial = serial.Serial(port=DEVICE, baudrate=BAUD, timeout=1.0)
-#serial_read_fd = serial
-#serial_write_fd = serial
-# In order to start using serial port again, comment out two lines below, uncomment three above
-# In shell:
+# In order to use debug mode, set the below variable to True, then in the shell:
 # mkfifo /tmp/cmd_fifo
 # mkfifo /tmp/rsp_fifo
 # cat /tmp/rsp_fifo
 # cat > /tmp/cmd_fifo
-# Other minor changes made to the code are all marked with 'FOR TEST' label
-serial_read_fd = open("/tmp/cmd_fifo", "r")
-serial_write_fd = open("/tmp/rsp_fifo", "w")
-
-serialWriteLock = threading.Lock()
+# nc localhost SERVER_PORT
+# Other minor changes made to the code are all marked with 'FOR TEST' label (and may have to be removed for production)
+DEBUG_MODE=True
+if DEBUG_MODE:
+    serial_read_fd = open("/tmp/cmd_fifo", "r")
+    serial_write_fd = open("/tmp/rsp_fifo", "w")
+else:
+    serial = serial.Serial(port=DEVICE, baudrate=BAUD, timeout=1.0)
+    serial_read_fd = serial
+    serial_write_fd = serial
 
 print("Starting at: {0}".format(datetime.datetime.now()))
 
 def writeCommand(command):
+    global serialWriteLock
+    serialWriteLock = threading.Lock()
     serialWriteLock.acquire()
-    print('Writing command: {}'.format(command))
     serial_write_fd.write(command)
     # flush is FOR TEST
     serial_write_fd.flush()
@@ -217,15 +219,19 @@ class ServerThread(StoppableThread):
         if message.startswith('s'):
             sensor_id = int(message[1:])
             print("Requested reading of sensor: {}".format(sensor_id))
+            return True
+        return False
 
     def process_input(self, message):
         self.partial_message += message
         while '$' in self.partial_message:
             headTail = self.partial_message.split('$', 1)
             one_message = headTail[0]
-            self.process_message(one_message)
+            handled = self.process_message(one_message)
+            if not handled:
+                self.client.send("u,{}$".format(one_message))
             self.partial_message = headTail[1]
-            self.client.send("blaha")
+
 
     def loop(self):
         self.socket.listen(1)
