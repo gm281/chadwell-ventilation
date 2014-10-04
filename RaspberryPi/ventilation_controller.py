@@ -21,6 +21,8 @@ BATHROOM_HYSTERESIS = 1
 # cat /tmp/rsp_fifo
 # cat > /tmp/cmd_fifo
 # nc localhost SERVER_PORT
+# to write a sensor reading, paste e.g. this to cat > /tmp/cmd_fifo:
+# s,1,OK,10,20
 # Other minor changes made to the code are all marked with 'FOR TEST' label (and may have to be removed for production)
 DEBUG_MODE=True
 if DEBUG_MODE:
@@ -92,12 +94,20 @@ class Sensor:
         self.lock.release()
         self.current_hour = []
 
+    def get_last_reading(self):
+        self.lock.acquire()
+        last_reading = self.last_reading
+        self.lock.release()
+        return last_reading
+
     def process_reading(self, humidity, temp):
         sensor_reading = SensorReading(datetime.datetime.now(), humidity, temp)
-        if self.last_reading != None and not same_hour(self.last_reading.date, sensor_reading.date): 
+        if self.last_reading != None and not same_hour(self.last_reading.date, sensor_reading.date):
             self.flush_hour()
+        self.lock.acquire()
         self.current_hour.append(sensor_reading)
-        self.last_reading = sensor_reading 
+        self.last_reading = sensor_reading
+        self.lock.release()
 
 sensors = []
 id_to_sensor = {}
@@ -142,7 +152,6 @@ class ReadingThread(StoppableThread):
     def loop(self):
         # FOR TEST: read(1) guarantees no buffering
         self.line += serial_read_fd.read(1)
-        print("Got: {}".format(self.line));
         while '\n' in self.line:
             headTail = self.line.split('\n', 1)
             line = headTail[0]
@@ -216,9 +225,25 @@ class ServerThread(StoppableThread):
     def process_message(self, message):
         message = message.lstrip('\n')
         print("Processing message: {}".format(message))
-        if message.startswith('s'):
-            sensor_id = int(message[1:])
+        if message.startswith('sensor'):
+            sensor_id = int(message[6:])
             print("Requested reading of sensor: {}".format(sensor_id))
+            if not id_to_sensor.has_key(sensor_id):
+                self.client.send("error,unknown_sensor,{}$".format(sensor_id))
+                return True
+            sensor = id_to_sensor[sensor_id]
+            sensor_last_reading = sensor.get_last_reading()
+            if sensor_last_reading == None:
+                self.client.send("error,no_sensor_readings,{}$".format(sensor_id))
+                return True
+            self.client.send("sensor_reading,{},{},{},{}$".format(sensor_id, sensor_last_reading.date, sensor_last_reading.humidity, sensor_last_reading.temperature))
+            return True
+        elif message.startswith('relay'):
+            payload = message[5:]
+            tokens = payload.split(',')
+            relay_id = int(tokens[0])
+            want_on = int(tokens[1])
+            writeCommand("r{},{}$".format(relay_id, want_on))
             return True
         return False
 
@@ -229,7 +254,7 @@ class ServerThread(StoppableThread):
             one_message = headTail[0]
             handled = self.process_message(one_message)
             if not handled:
-                self.client.send("u,{}$".format(one_message))
+                self.client.send("error,unknown_command,{}$".format(one_message))
             self.partial_message = headTail[1]
 
 
