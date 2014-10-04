@@ -1,0 +1,12 @@
+relay 0: hall
+relay 2: bathroom
+relay 3: our bedroom
+relay 4: study
+relay 5: Jasiu's bedroom
+
+sensor 0: study
+sensor 1: outside
+sensor 2: Jasiu's bedroom
+sensor 3: bathroom
+sensor 4: our bedroom
+sensor 5: hall

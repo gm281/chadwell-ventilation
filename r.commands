@@ -1,0 +1,14 @@
+echo "cnt, hum, temp" > /tmp/sensor.csv; cat sensor.out | grep "s,4,OK" | cat -n | sed -e 's/[ ]*\([0-9]*\)[ ]*s,.,OK,\([\.0-9]*\),\([\.0-9]*\)/\1, \2, \3/g' >> /tmp/sensor.csv
+
+> data <- read.table("/tmp/sensor.csv", header=T, sep=",")
+> attach(data)
+> hours <- (cnt/830 + 10)
+> plot(hours, temp, type="l", ylim=c(0,100))
+> lines(hours, hum, col=3)
+
+
+echo "date, humidity, temperature" > /tmp/y.csv;  find . -type f | sort -n | xargs cat >> /tmp/y.csv
+> data2 <- read.table("/tmp/y.csv", header=T, sep=",", as.is=TRUE)
+> dates2 <- as.POSIXct(strptime(data2[,1], "%Y-%m-%d %H:%M:%S"))
+> plot(dates2, data[,2], type="l", ylim=c(0,100))
+> lines(dates2, data[,3], col=3)
