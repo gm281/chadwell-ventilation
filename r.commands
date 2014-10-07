@@ -7,8 +7,21 @@ echo "cnt, hum, temp" > /tmp/sensor.csv; cat sensor.out | grep "s,4,OK" | cat -n
 > lines(hours, hum, col=3)
 
 
+# shell
 echo "date, humidity, temperature" > /tmp/y.csv;  find . -type f | sort -n | xargs cat >> /tmp/y.csv
-> data2 <- read.table("/tmp/y.csv", header=T, sep=",", as.is=TRUE)
-> dates2 <- as.POSIXct(strptime(data2[,1], "%Y-%m-%d %H:%M:%S"))
-> plot(dates2, data[,2], type="l", ylim=c(0,100))
-> lines(dates2, data[,3], col=3)
+
+# r
+data2 <- read.table("/tmp/y.csv", header=T, sep=",", as.is=TRUE)
+dates2 <- as.POSIXct(strptime(data2[,1], "%Y-%m-%d %H:%M:%S"))
+plot(dates2, data2[,2], type="l", ylim=c(0,100))
+lines(dates2, data2[,3], col=3)
+
+data3 <- read.table("/tmp/z.csv", header=T, sep=",", as.is=TRUE)
+dates3 <- as.POSIXct(strptime(data3[,1], "%Y-%m-%d %H:%M:%S"))
+lines(dates3, data3[,2], col=4)
+lines(dates3, data3[,3], col=5)
+
+data4 <- read.table("/tmp/a.csv", header=T, sep=",", as.is=TRUE)
+dates4 <- as.POSIXct(strptime(data4[,1], "%Y-%m-%d %H:%M:%S"))
+lines(dates4, data4[,2], col=6)
+lines(dates4, data4[,3], col=7)

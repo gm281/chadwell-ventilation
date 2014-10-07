@@ -60,6 +60,9 @@ class Place:
 
 bathroom = Place("Bathroom", 3, 2)
 places = [bathroom, Place("Outside", 1, -1), Place("Hall", 5, 0), Place("Jasiu", 2, 5), Place("Study", 0, 4), Place("Bedroom", 4, 3)]
+place_names_to_place = {}
+for place in places:
+    place_names_to_place[place.name] = place
 
 def same_hour(datetime1, datetime2):
     return (datetime1.year == datetime2.year) and (datetime1.month == datetime2.month) and (datetime1.day == datetime2.day) and (datetime1.hour == datetime2.hour)
@@ -76,6 +79,7 @@ class SensorReading:
 class Sensor:
     def __init__(self, place):
         self.place = place
+        self.sensor_id = place.sensor_id
         self.current_hour = []
         self.complete_hours = []
         self.last_reading = None
@@ -109,25 +113,26 @@ class Sensor:
         self.last_reading = sensor_reading
         self.lock.release()
 
-sensors = []
+    def request_reading(self):
+        writeCommand("s{0}$".format(self.sensor_id))
+
+class Relay:
+    def __init__(self, place):
+        self.place = place
+        self.relay_id = place.relay_id
+
+    def switch(self, on):
+        writeCommand("r{0},{1}$".format(self.relay_id, int(on)))
+
 id_to_sensor = {}
-bathroom_sensor = None
 for place in places:
-    sensor = Sensor(place)
-    sensors.append(sensor)
-    id_to_sensor[place.sensor_id] = sensor 
-    if place == bathroom:
-        bathroom_sensor = sensor
+    if place.sensor_id >= 0:
+        sensor = Sensor(place)
+        id_to_sensor[place.sensor_id] = sensor
+        place.sensor = sensor
+    if place.relay_id >= 0:
+        place.relay = Relay(place)
 
-
-def process_sensor_reading(sensor_id, humidity, temperature):
-    global is_on
-    sensor = id_to_sensor[sensor_id]
-    if sensor is None:
-        print('Warning: unknown sensor_id {0}, reading {}, {}'.format(sensor_id, humidity, temperature))
-        return
-
-    sensor.process_reading(humidity, temperature)
 
 class StoppableThread(threading.Thread):
     def __init__(self):
@@ -149,6 +154,14 @@ class ReadingThread(StoppableThread):
         super(ReadingThread, self).__init__()
         self.line = ""
 
+    def process_sensor_reading(self, sensor_id, humidity, temperature):
+        global is_on
+        sensor = id_to_sensor[sensor_id]
+        if sensor is None:
+            print('Warning: unknown sensor_id {0}, reading {}, {}'.format(sensor_id, humidity, temperature))
+            return
+        sensor.process_reading(humidity, temperature)
+
     def loop(self):
         # FOR TEST: read(1) guarantees no buffering
         self.line += serial_read_fd.read(1)
@@ -158,7 +171,7 @@ class ReadingThread(StoppableThread):
             if line.startswith("s,"):
                 tokens = line.split(',')
                 if tokens[2] == "OK":
-                    process_sensor_reading(int(tokens[1]), float(tokens[3]), float(tokens[4]))
+                    self.process_sensor_reading(int(tokens[1]), float(tokens[3]), float(tokens[4]))
             else:
                 print("Unknown message: {0}".format(line))
             self.line = headTail[1]
@@ -169,9 +182,10 @@ class SamplingThread(StoppableThread):
 
     def loop(self):
         time.sleep(3)
-        for i in range(NR_SENSORS):
-            writeCommand("s{0}$".format(i))
-            time.sleep(0.1)
+        for place in places:
+            if hasattr(place, "sensor"):
+                place.sensor.request_reading()
+                time.sleep(0.1)
 
 class WriteoutThread(StoppableThread):
     def __init__(self):
@@ -190,20 +204,24 @@ class WriteoutThread(StoppableThread):
 
     def loop(self):
         time.sleep(1)
-        for sensor in sensors:
-            complete_hours = sensor.consume_complete_hours()
-            for complete_hour in complete_hours:
-                self.writeout_hour(sensor.place, complete_hour)
+        for place in places:
+            if hasattr(place, "sensor"):
+                sensor = place.sensor
+                complete_hours = sensor.consume_complete_hours()
+                for complete_hour in complete_hours:
+                    self.writeout_hour(sensor.place, complete_hour)
 
 class VentilationThread(StoppableThread):
     def __init__(self):
         super(VentilationThread, self).__init__()
         self.is_on = False
-        writeCommand("r2,{0}$".format(int(self.is_on)))
+        self.bathroom_sensor = bathroom.sensor
+        self.bathroom_relay = bathroom.relay
+        self.bathroom_relay.switch(self.is_on)
 
     def loop(self):
         time.sleep(1)
-        last_reading = bathroom_sensor.last_reading
+        last_reading = self.bathroom_sensor.last_reading
         if last_reading == None:
             return
         want_on = last_reading.humidity > BATHROOM_MAX_HUMIDITY + BATHROOM_HYSTERESIS
@@ -211,7 +229,7 @@ class VentilationThread(StoppableThread):
         if (want_on and not self.is_on) or (want_off and self.is_on):
             switching_on = want_on
             print("Date: {0}, switching on: {1}, due to reading: {2}".format(datetime.datetime.now(), int(switching_on), str(last_reading)))
-            writeCommand("r2,{0}$".format(int(switching_on)))
+            self.bathroom_relay.switch(switching_on)
             self.is_on = switching_on
 
 class ServerThread(StoppableThread):
@@ -226,24 +244,26 @@ class ServerThread(StoppableThread):
         message = message.lstrip('\n')
         print("Processing message: {}".format(message))
         if message.startswith('sensor'):
-            sensor_id = int(message[6:])
-            print("Requested reading of sensor: {}".format(sensor_id))
-            if not id_to_sensor.has_key(sensor_id):
-                self.client.send("error,unknown_sensor,{}$".format(sensor_id))
-                return True
-            sensor = id_to_sensor[sensor_id]
-            sensor_last_reading = sensor.get_last_reading()
-            if sensor_last_reading == None:
-                self.client.send("error,no_sensor_readings,{}$".format(sensor_id))
-                return True
-            self.client.send("sensor_reading,{},{},{},{}$".format(sensor_id, sensor_last_reading.date, sensor_last_reading.humidity, sensor_last_reading.temperature))
+            place_name = message[7:]
+            print("Requested sensor reading for: {}".format(place_name))
+            if place_names_to_place.has_key(place_name):
+                place = place_names_to_place[place_name]
+                if hasattr(place, "sensor"):
+                    sensor_last_reading = place.sensor.get_last_reading()
+                    if sensor_last_reading == None:
+                        self.client.send("error,no_sensor_readings,{}$".format(place_name))
+                    else:
+                        self.client.send("sensor_reading,{},{},{},{}$".format(place_name, sensor_last_reading.date, sensor_last_reading.humidity, sensor_last_reading.temperature))
             return True
         elif message.startswith('relay'):
-            payload = message[5:]
+            payload = message[6:]
             tokens = payload.split(',')
-            relay_id = int(tokens[0])
+            place_name = tokens[0]
             want_on = int(tokens[1])
-            writeCommand("r{},{}$".format(relay_id, want_on))
+            if place_names_to_place.has_key(place_name):
+                place = place_names_to_place[place_name]
+                if hasattr(place, "relay"):
+                    place.relay.switch(want_on)
             return True
         return False
 
