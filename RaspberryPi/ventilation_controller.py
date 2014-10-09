@@ -7,7 +7,7 @@ import errno
 import sys
 import socket
 
-SERVER_PORT=12401
+SERVER_PORT=12400
 DEVICE = '/dev/ttyACM0' # the arduino serial interface (use dmesg when connecting)
 BAUD = 9600
 NR_SENSORS = 6
@@ -236,13 +236,13 @@ class ServerThread(StoppableThread):
     def __init__(self):
         super(ServerThread, self).__init__()
         self.socket = socket.socket()
+        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.bind(('', SERVER_PORT))
         self.partial_message = ''
         self.client = None
 
     def process_message(self, message):
         message = message.lstrip('\n')
-        print("Processing message: {}".format(message))
         if message.startswith('sensor'):
             place_name = message[7:]
             print("Requested sensor reading for: {}".format(place_name))
@@ -257,6 +257,7 @@ class ServerThread(StoppableThread):
             return True
         elif message.startswith('relay'):
             payload = message[6:]
+            print("Requested relay switch for: {}".format(payload))
             tokens = payload.split(',')
             place_name = tokens[0]
             want_on = int(tokens[1])
@@ -264,7 +265,12 @@ class ServerThread(StoppableThread):
                 place = place_names_to_place[place_name]
                 if hasattr(place, "relay"):
                     place.relay.switch(want_on)
+                else:
+                    print("Requested relay switch for place without relay: {}".format(place_name))
+            else:
+                print("Couldn't find place: {}".format(place_name))
             return True
+        print("Requested unknown command: {}".format(message))
         return False
 
     def process_input(self, message):
