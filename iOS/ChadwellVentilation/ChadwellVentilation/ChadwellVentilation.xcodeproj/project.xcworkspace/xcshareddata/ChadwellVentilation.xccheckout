@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>23124AFD-8741-47D1-A976-DF4D42E37194</string>
+	<key>IDESourceControlProjectName</key>
+	<string>ChadwellVentilation</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>C335CDDC-C99B-45AD-B4B4-CED5A89C5622</key>
+		<string>ssh://github.com/gm281/chadwell-ventilation.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>iOS/ChadwellVentilation/ChadwellVentilation/ChadwellVentilation.xcodeproj/project.xcworkspace</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>C335CDDC-C99B-45AD-B4B4-CED5A89C5622</key>
+		<string>../../../../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>ssh://github.com/gm281/chadwell-ventilation.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>110</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>C335CDDC-C99B-45AD-B4B4-CED5A89C5622</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>C335CDDC-C99B-45AD-B4B4-CED5A89C5622</string>
+			<key>IDESourceControlWCCName</key>
+			<string>chadwell-ventilation</string>
+		</dict>
+	</array>
+</dict>
+</plist>
