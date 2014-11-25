@@ -24,7 +24,7 @@ BATHROOM_HYSTERESIS = 1
 # to write a sensor reading, paste e.g. this to cat > /tmp/cmd_fifo:
 # s,1,OK,10,20
 # Other minor changes made to the code are all marked with 'FOR TEST' label (and may have to be removed for production)
-DEBUG_MODE=True
+DEBUG_MODE=False
 if DEBUG_MODE:
     serial_read_fd = open("/tmp/cmd_fifo", "r")
     serial_write_fd = open("/tmp/rsp_fifo", "w")
@@ -59,7 +59,12 @@ class Place:
         self.relay_id = relay_id
 
 bathroom = Place("Bathroom", 3, 2)
-places = [bathroom, Place("Outside", 1, -1), Place("Hall", 5, 0), Place("Jasiu", 2, 5), Place("Study", 0, 4), Place("Bedroom", 4, 3)]
+outside = Place("Outside", 1, -1)
+hall = Place("Hall", 5, 0)
+jasiu = Place("Jasiu", 2, 5)
+study = Place("Study", 0, 4)
+bedroom = Place("Bedroom", 4, 3)
+places = [bathroom, outside, hall, jasiu, study, bedroom]
 place_names_to_place = {}
 for place in places:
     place_names_to_place[place.name] = place
@@ -218,19 +223,34 @@ class VentilationThread(StoppableThread):
         self.bathroom_sensor = bathroom.sensor
         self.bathroom_relay = bathroom.relay
         self.bathroom_relay.switch(self.is_on)
+        self.bedroom_relay = bedroom.relay
+        self.last_time = datetime.datetime.now()
+
+    def want_bedroom_on(self, time):
+        minutes = time.minute
+        return (minutes >= 5) and (minutes < 10)
 
     def loop(self):
         time.sleep(1)
         last_reading = self.bathroom_sensor.last_reading
-        if last_reading == None:
-            return
-        want_on = last_reading.humidity > BATHROOM_MAX_HUMIDITY + BATHROOM_HYSTERESIS
-        want_off = last_reading.humidity <= BATHROOM_MAX_HUMIDITY - BATHROOM_HYSTERESIS
-        if (want_on and not self.is_on) or (want_off and self.is_on):
-            switching_on = want_on
-            print("Date: {0}, switching on: {1}, due to reading: {2}".format(datetime.datetime.now(), int(switching_on), str(last_reading)))
-            self.bathroom_relay.switch(switching_on)
-            self.is_on = switching_on
+        if last_reading != None:
+            want_on = last_reading.humidity > BATHROOM_MAX_HUMIDITY + BATHROOM_HYSTERESIS
+            want_off = last_reading.humidity <= BATHROOM_MAX_HUMIDITY - BATHROOM_HYSTERESIS
+            if (want_on and not self.is_on) or (want_off and self.is_on):
+                switching_on = want_on
+                print("Date: {0}, switching on: {1}, due to reading: {2}".format(datetime.datetime.now(), int(switching_on), str(last_reading)))
+                self.bathroom_relay.switch(switching_on)
+                self.is_on = switching_on
+        current_time = datetime.datetime.now()
+        want_bedroom_on = self.want_bedroom_on(current_time)
+        wanted_bedroom_on = self.want_bedroom_on(self.last_time)
+        if want_bedroom_on and not wanted_bedroom_on:
+            print("Switching bedroom on");
+            self.bedroom_relay.switch(True)
+        if not want_bedroom_on and wanted_bedroom_on:
+            print("Switching bedroom off");
+            self.bedroom_relay.switch(False)
+        self.last_time = current_time
 
 class ServerThread(StoppableThread):
     def __init__(self):
