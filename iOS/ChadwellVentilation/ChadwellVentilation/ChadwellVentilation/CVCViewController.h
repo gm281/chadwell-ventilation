@@ -7,7 +7,8 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "CVCPlaceUIElements.h"
 
-@interface CVCViewController : UIViewController
+@interface CVCViewController : UIViewController <CVCPlaceUIElementsDelegate>
 
 @end

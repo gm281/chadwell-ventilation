@@ -26,5 +26,6 @@ static NSString *const CVCControllerConnectionErrorDomain = @"CVCControllerConne
 @property (nonatomic, weak, readwrite) id<CVCControllerConnectionDelegate> delegate;
 - (void)connect;
 - (void)requestSensorReading:(NSString *)placeName;
+- (void)relayForPlace:(NSString *)placeName switchOn:(BOOL)on;
 
 @end

@@ -8,6 +8,16 @@
 
 #import <Foundation/Foundation.h>
 
+@class CVCSensorReading;
+
 @interface CVCPlace : NSObject
+
+@property (nonatomic, readonly, strong) NSString *name;
+@property (nonatomic, readonly, assign) BOOL hasRelay;
+@property (atomic, readwrite, strong) CVCSensorReading *latestSensorReading;
+
++ (NSArray *)places;
++ (CVCPlace *)placeByName:(NSString *)name;
+- (void)handleNewSensorReading:(CVCSensorReading *)sensorReading;
 
 @end

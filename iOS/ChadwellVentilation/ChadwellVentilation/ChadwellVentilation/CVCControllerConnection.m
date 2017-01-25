@@ -8,6 +8,7 @@
 
 #import "CVCControllerConnection.h"
 #import "CVCUtils.h"
+#import "CVCSensorReading.h"
 
 @interface CVCControllerConnection ()
 @property (nonatomic, readwrite, assign) BOOL inputStreamOpened;
@@ -36,7 +37,8 @@
 {
     CFReadStreamRef readStream;
     CFWriteStreamRef writeStream;
-    CFStreamCreatePairWithSocketToHost(kCFAllocatorDefault, (__bridge CFStringRef)@"localhost", 12400, &readStream, &writeStream);
+    CFStreamCreatePairWithSocketToHost(kCFAllocatorDefault, (__bridge CFStringRef)@"192.168.0.101", 12400, &readStream, &writeStream);
+    //CFStreamCreatePairWithSocketToHost(kCFAllocatorDefault, (__bridge CFStringRef)@"localhost", 12400, &readStream, &writeStream);
 
     if(!CFWriteStreamOpen(writeStream)) {
         NSError *error = [NSError errorWithDomain:CVCControllerConnectionErrorDomain
@@ -139,6 +141,12 @@
     [self queueMessageString:messageString];
 }
 
+- (void)relayForPlace:(NSString *)placeName switchOn:(BOOL)on
+{
+    NSString *messageString = [NSString stringWithFormat:@"relay,%@,%d$", placeName, on ? 1 : 0];
+    [self queueMessageString:messageString];
+}
+
 - (void)stream:(NSStream *)stream handleEvent:(NSStreamEvent)event
 {
     if (stream == self.outputStream) {
@@ -160,11 +168,44 @@
         return;
     }
     NSInteger bytesWritten = [self.outputStream write:[self.messageBuffer bytes] maxLength:self.messageBuffer.length];
-    NSLog(@"==> Written: %ld bytes", bytesWritten);
     if (bytesWritten > 0) {
         NSRange reminderRange = {bytesWritten + 1, self.messageBuffer.length - bytesWritten};
         self.messageBuffer = [self.messageBuffer subdataWithRange:reminderRange];
     }
+}
+
+- (void)processMessageData:(NSData *)messageData
+{
+    NSString *message = [[NSString alloc] initWithData:messageData encoding:NSUTF8StringEncoding];
+    NSLog(@"==> Got message: %@", message);
+    NSArray *tokens = [message componentsSeparatedByString:@","];
+    if ([tokens count] <= 0) {
+        return;
+    }
+    NSString *messageType = tokens[0];
+    if ([messageType isEqualToString:@"sensor_reading"]) {
+        if ([tokens count] != 5) {
+            NSLog(@"Wrong number of tokens in sensor_reading: %d", [tokens count]);
+            return;
+        }
+        NSString *placeName = tokens[1];
+        NSDateFormatter *dateFormat = [[NSDateFormatter alloc] init];
+        [dateFormat setDateFormat:@"yyyy-MM-dd HH:mm:ss.SSSSSS"];
+        NSDate *date = [dateFormat dateFromString:tokens[2]];
+        double humidity = [tokens[3] doubleValue];
+        double temperature = [tokens[4] doubleValue];
+
+        CVCPlace *place = [CVCPlace placeByName:placeName];
+        if (place == nil) {
+            NSLog(@"Got reading: %@, %@, %f, %f, but place unknown", placeName, date, humidity, temperature);
+        }
+        CVCSensorReading *reading = [[CVCSensorReading alloc] initWithPlace:place
+                                                                       date:date
+                                                                   humidity:humidity
+                                                                temperature:temperature];
+        [place handleNewSensorReading:reading];
+    }
+
 }
 
 - (void)readMessage
@@ -190,8 +231,7 @@
         if (range.location != 0) {
             NSRange messageRange = {0, range.location + 1};
             messageData = [self.outputStreamBuffer subdataWithRange:messageRange];
-            NSString *message = [[NSString alloc] initWithData:messageData encoding:NSUTF8StringEncoding];
-            NSLog(@"==> Got message: %@", message);
+            [self processMessageData:messageData];
         }
 
         NSRange remainderRange = {range.location + 1, [self.outputStreamBuffer length] - range.location - 1};

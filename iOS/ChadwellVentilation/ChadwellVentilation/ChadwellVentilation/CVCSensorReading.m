@@ -10,4 +10,18 @@
 
 @implementation CVCSensorReading
 
+- (instancetype)initWithPlace:(CVCPlace *)place
+                         date:(NSDate *)date
+                     humidity:(float)humidity
+                  temperature:(float)temperature
+{
+    self = [super init];
+    if (self) {
+        _place = place;
+        _date = date;
+        _humididy = humidity;
+        _temperature = temperature;
+    }
+    return self;
+}
 @end

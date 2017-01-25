@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		E6CEE3F619EB2F1F00D97E1C /* CVCPlace.m in Sources */ = {isa = PBXBuildFile; fileRef = E6CEE3F519EB2F1F00D97E1C /* CVCPlace.m */; };
+		E6CEE3F919EB310000D97E1C /* CVCSensorReading.m in Sources */ = {isa = PBXBuildFile; fileRef = E6CEE3F819EB310000D97E1C /* CVCSensorReading.m */; };
+		E6CEE3FC19EB37FF00D97E1C /* CVCPlaceUIElements.m in Sources */ = {isa = PBXBuildFile; fileRef = E6CEE3FB19EB37FF00D97E1C /* CVCPlaceUIElements.m */; };
 		E6ECB83E19E690B900E3460E /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E6ECB83D19E690B900E3460E /* Foundation.framework */; };
 		E6ECB84019E690B900E3460E /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E6ECB83F19E690B900E3460E /* CoreGraphics.framework */; };
 		E6ECB84219E690B900E3460E /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E6ECB84119E690B900E3460E /* UIKit.framework */; };
@@ -37,6 +40,12 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		E6CEE3F419EB2F1F00D97E1C /* CVCPlace.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CVCPlace.h; sourceTree = "<group>"; };
+		E6CEE3F519EB2F1F00D97E1C /* CVCPlace.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CVCPlace.m; sourceTree = "<group>"; };
+		E6CEE3F719EB310000D97E1C /* CVCSensorReading.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CVCSensorReading.h; sourceTree = "<group>"; };
+		E6CEE3F819EB310000D97E1C /* CVCSensorReading.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CVCSensorReading.m; sourceTree = "<group>"; };
+		E6CEE3FA19EB37FF00D97E1C /* CVCPlaceUIElements.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CVCPlaceUIElements.h; sourceTree = "<group>"; };
+		E6CEE3FB19EB37FF00D97E1C /* CVCPlaceUIElements.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CVCPlaceUIElements.m; sourceTree = "<group>"; };
 		E6ECB83A19E690B900E3460E /* ChadwellVentilation.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ChadwellVentilation.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E6ECB83D19E690B900E3460E /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		E6ECB83F19E690B900E3460E /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -122,16 +131,22 @@
 			children = (
 				E6ECB84C19E690B900E3460E /* CVCAppDelegate.h */,
 				E6ECB84D19E690B900E3460E /* CVCAppDelegate.m */,
-				E6ECB84F19E690B900E3460E /* Main_iPhone.storyboard */,
-				E6ECB85219E690B900E3460E /* Main_iPad.storyboard */,
 				E6ECB85519E690B900E3460E /* CVCViewController.h */,
 				E6ECB85619E690B900E3460E /* CVCViewController.m */,
-				E6ECB85819E690BA00E3460E /* Images.xcassets */,
-				E6ECB84419E690B900E3460E /* Supporting Files */,
+				E6CEE3FA19EB37FF00D97E1C /* CVCPlaceUIElements.h */,
+				E6CEE3FB19EB37FF00D97E1C /* CVCPlaceUIElements.m */,
 				E6ECB87519E6CA5400E3460E /* CVCControllerConnection.h */,
 				E6ECB87619E6CA5400E3460E /* CVCControllerConnection.m */,
 				E6ECB87819E6CAF600E3460E /* CVCUtils.h */,
 				E6ECB87919E6CAF600E3460E /* CVCUtils.m */,
+				E6CEE3F419EB2F1F00D97E1C /* CVCPlace.h */,
+				E6CEE3F519EB2F1F00D97E1C /* CVCPlace.m */,
+				E6CEE3F719EB310000D97E1C /* CVCSensorReading.h */,
+				E6CEE3F819EB310000D97E1C /* CVCSensorReading.m */,
+				E6ECB84F19E690B900E3460E /* Main_iPhone.storyboard */,
+				E6ECB85219E690B900E3460E /* Main_iPad.storyboard */,
+				E6ECB85819E690BA00E3460E /* Images.xcassets */,
+				E6ECB84419E690B900E3460E /* Supporting Files */,
 			);
 			path = ChadwellVentilation;
 			sourceTree = "<group>";
@@ -265,9 +280,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				E6ECB87A19E6CAF600E3460E /* CVCUtils.m in Sources */,
+				E6CEE3F919EB310000D97E1C /* CVCSensorReading.m in Sources */,
 				E6ECB87719E6CA5400E3460E /* CVCControllerConnection.m in Sources */,
+				E6CEE3FC19EB37FF00D97E1C /* CVCPlaceUIElements.m in Sources */,
 				E6ECB84A19E690B900E3460E /* main.m in Sources */,
 				E6ECB85719E690BA00E3460E /* CVCViewController.m in Sources */,
+				E6CEE3F619EB2F1F00D97E1C /* CVCPlace.m in Sources */,
 				E6ECB84E19E690B900E3460E /* CVCAppDelegate.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -483,6 +501,7 @@
 				E6ECB87119E690BA00E3460E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		E6ECB87219E690BA00E3460E /* Build configuration list for PBXNativeTarget "ChadwellVentilationTests" */ = {
 			isa = XCConfigurationList;
@@ -491,6 +510,7 @@
 				E6ECB87419E690BA00E3460E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
